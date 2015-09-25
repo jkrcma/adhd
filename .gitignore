@@ -1,0 +1,6 @@
+config.py
+.idea/
+
+.venv/
+*.pyc
+*.pyo
