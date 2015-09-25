@@ -1,0 +1,17 @@
+{% extends '_layout.html' %}
+
+{% block assets %}
+    <link rel="stylesheet" type="text/css" href="/static/highlight.css">
+{% endblock %}
+
+{% block title %}{{ repo }}: {{ path }}{% endblock %}
+
+{% block body %}
+    {% if content.toc_html %}
+    <div class="toc">
+        <h3>Table of Contents</h3>
+        {{ content.toc_html|safe }}
+    </div>
+    {% endif %}
+    {{ content|safe }}
+{% endblock %}
