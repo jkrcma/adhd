@@ -1,9 +1,20 @@
+import logging
 import os
 import os.path
 from collections import OrderedDict
+from redis import Redis
+from rq import Queue
+from shutil import rmtree
 from subprocess import check_call, check_output, CalledProcessError
 
-from config import REPOSITORIES, GIT_DIR
+import config
+from config import REPOSITORIES, GIT_DIR, UPDATE_INTERVAL
+from .workers import schedule_update, clone_git_repository, update_git_repository
+
+logger = logging.getLogger(__name__)
+
+redis = Redis(config.REDIS_HOST, config.REDIS_PORT, config.REDIS_DB, config.REDIS_AUTH)
+queue = Queue('wiki-updates', connection=redis)
 
 
 class PagesCollection(object):
@@ -12,6 +23,9 @@ class PagesCollection(object):
         unordered = {name: Repository(name, url) for (name, url) in REPOSITORIES.items()}
         self.repositories = OrderedDict(sorted(unordered.items(), key=lambda x: x[0]))
 
+        for repo in self.repositories.values():
+            repo.refresh()
+
     def get_toplevel_categories(self):
         return list(REPOSITORIES.keys())
 
@@ -19,17 +33,22 @@ class PagesCollection(object):
         files = OrderedDict()
         for name in self.repositories.keys():
             repo = self.get_repository(name)
-            files[name] = [f for f in repo.list_files() if f.endswith('.md')]
+
+            if not repo:
+                continue
+
+            try:
+                files[name] = [f for f in repo.list_files() if f.endswith('.md')]
+            except GitException:
+                logger.exception("Model error")
 
         return files
 
     def get_repository(self, name):
         repo = self.repositories[name]
-        # this is temporary to fulfill the MVP requirement ;)
-        if not repo.is_initialized():
-            repo.clone()
+        repo.refresh()
 
-        return self.repositories[name]
+        return repo if repo.is_initialized() else None
 
 
 class Repository(object):
@@ -41,9 +60,12 @@ class Repository(object):
     def __init__(self, name, url):
         self.name = name
         self.url = url
+        self._initializing = True
+        self._async_job = None
 
     def clone(self):
         try:
+            rmtree(self.repo_dir, ignore_errors=True)
             check_call(['git', 'clone', '--bare', '--depth', '1', self.url, self.repo_dir])
         except CalledProcessError as e:
             raise GitException("Failed to clone the repository from '{0}'".format(self.url)) from e
@@ -51,7 +73,10 @@ class Repository(object):
     def update(self):
         assert os.path.isdir(self.repo_dir)
 
-        check_call(['git', 'fetch', '--depth', '1'], env={'GIT_DIR': self.repo_dir})
+        try:
+            check_call(['git', 'fetch', '--depth', '1'], env={'GIT_DIR': self.repo_dir})
+        except CalledProcessError as e:
+            raise GitException("Failed to fetch the repository '{0}'".format(self.name)) from e
 
     def list_files(self):
         assert os.path.isdir(self.repo_dir)
@@ -74,7 +99,36 @@ class Repository(object):
                 "Failed to checkout file '{1}' from repository '{0}'".format(self.name, file_path)) from e
 
     def is_initialized(self):
-        return os.path.isdir(self.repo_dir)
+        if self._async_job and self._async_job.result is True:
+            self._initializing = False
+
+        if self._initializing:
+            return self.refresh()
+
+        try:
+            return check_call(['git', 'show-ref', '-q'], env={'GIT_DIR': self.repo_dir}) == 0
+        except CalledProcessError:
+            return False
+
+    def refresh(self):
+        job_id = "update:{0}".format(self.name)
+        job = queue.fetch_job(job_id)
+
+        if job:
+            return True
+
+        logger.debug("Updating repo {0} and scheduling timer, job_id={1}".format(self.name, job_id))
+        # enqueue a job with fixed id which actually determines a timer for the updated itself
+        queue.enqueue_call(func=schedule_update, result_ttl=UPDATE_INTERVAL, job_id=job_id)
+
+        # and now the updater job itself
+        if not os.path.isdir(self.repo_dir):
+            self._async_job = queue.enqueue_call(func=clone_git_repository, args=[self])
+            # repository will become available once clone finishes
+        else:
+            self._async_job = queue.enqueue_call(func=update_git_repository, args=[self])
+
+        return False
 
     @property
     def repo_dir(self):

@@ -9,12 +9,12 @@
     <div id="menu">
         <h2>Menu</h2>
         <ul>
-        <li><a href="{{ url_for('index') }}">Home</a></li>
+        <li><a href="{{ url_for('page.index') }}">Home</a></li>
         {% for repository, files in g.pages.items() %}
             <li>{{ repository }}
                 <ul>
                     {% for file in files %}
-                        <li><a href="{{ url_for('page', repo=repository, page_path=file) }}">{{ file }}</a></li>
+                        <li><a href="{{ url_for('page.page', repo=repository, page_path=file) }}">{{ file }}</a></li>
                     {% endfor %}
                 </ul>
             </li>

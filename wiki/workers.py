@@ -1,24 +1,31 @@
 import logging
 
-from config import REPOSITORIES
-from .models import Repository
-
 logger = logging.getLogger(__name__)
 
-def update_git_repository(name):
-    """Performs an update (git fetch) of a given repo name
+
+def clone_git_repository(repo):
+    """Performs a clone of a given repo name
     """
     try:
-        repo = Repository(name, REPOSITORIES[name])
-        repo.update()
+        repo.clone()
     except Exception:
-        logger.exception("Failed to update the Git repository '{0}'".format(name))
-        return False
+        logger.exception("Clone failed")
 
     return True
 
 
-def schedule_update(name):
+def update_git_repository(repo):
+    """Performs an update (git fetch) of a given repo name
+    """
+    try:
+        repo.update()
+    except Exception:
+        logger.exception("Update failed")
+
+    return True
+
+
+def schedule_update():
     """Actually does nothing, but the result TTL of this function works as a timer
     """
     return True
