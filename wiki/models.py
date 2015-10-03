@@ -1,6 +1,6 @@
 import os
 import os.path
-import random
+from collections import OrderedDict
 from subprocess import check_call, check_output, CalledProcessError
 
 from config import REPOSITORIES, GIT_DIR
@@ -9,13 +9,14 @@ from config import REPOSITORIES, GIT_DIR
 class PagesCollection(object):
 
     def __init__(self):
-        self.repositories = {name: Repository(name, url) for (name, url) in REPOSITORIES.items()}
+        unordered = {name: Repository(name, url) for (name, url) in REPOSITORIES.items()}
+        self.repositories = OrderedDict(sorted(unordered.items(), key=lambda x: x[0]))
 
     def get_toplevel_categories(self):
         return list(REPOSITORIES.keys())
 
     def get_available_pages(self):
-        files = {}
+        files = OrderedDict()
         for name in self.repositories.keys():
             repo = self.get_repository(name)
             files[name] = [f for f in repo.list_files() if f.endswith('.md')]
@@ -27,9 +28,6 @@ class PagesCollection(object):
         # this is temporary to fulfill the MVP requirement ;)
         if not repo.is_initialized():
             repo.clone()
-        elif random.randrange(3) == 0:
-            repo.update()
-
 
         return self.repositories[name]
 
