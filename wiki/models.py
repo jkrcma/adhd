@@ -34,7 +34,7 @@ class PagesCollection(object):
         for name in self.repositories.keys():
             repo = self.get_repository(name)
 
-            if not repo or not repo.is_initialized():
+            if not repo:
                 continue
 
             try:
@@ -48,7 +48,7 @@ class PagesCollection(object):
         repo = self.repositories[name]
         repo.refresh()
 
-        return repo if repo.is_initialized() else None
+        return repo if repo.is_cloned() else None
 
 
 class Repository(object):
@@ -62,15 +62,20 @@ class Repository(object):
     def __init__(self, name, url):
         self.name = name
         self.url = url
+        self._cloned = self._check_cloned()
         self._initializing = True
+
+    def delete(self):
+        rmtree(self.repo_dir, ignore_errors=True)
 
     def clone(self):
         try:
-            rmtree(self.repo_dir, ignore_errors=True)
+            self.delete()
             check_call(['git', 'clone', '--bare', '--depth', '1', self.url, self.repo_dir])
         except CalledProcessError as e:
             raise GitException("Failed to clone the repository from '{0}'".format(self.url)) from e
 
+        self._cloned = True
         self.update()
 
     def update(self):
@@ -101,18 +106,11 @@ class Repository(object):
             raise GitException(
                 "Failed to checkout file '{1}' from repository '{0}'".format(self.name, file_path)) from e
 
-    def is_initialized(self):
-        if not self._async_job or not self._async_job.result:
-            self.refresh()
-            return False
+    def is_cloned(self):
+        return self._cloned
 
-        try:
-            return check_call(['git', 'show-ref', '-q'], env={'GIT_DIR': self.repo_dir}) == 0
-        except CalledProcessError:
-            return False
-
-    def refresh(self):
-        if self._async_job:
+    def refresh(self, force=False):
+        if not force and self._async_job:
             return True
 
         job_id = self.JOB_ID_FMT.format(self.name)
@@ -129,6 +127,18 @@ class Repository(object):
             queue.enqueue_call(func=update_git_repository, args=[self])
 
         return False
+
+    def _check_cloned(self):
+        try:
+            output = check_output(['git', 'config', '--get', 'remote.origin.url'], env={'GIT_DIR': self.repo_dir})
+            if output.decode('utf-8').strip() != self.url:
+                self.delete()
+                self.refresh(True)
+                return False
+        except CalledProcessError:
+            return False
+
+        return True
 
     @property
     def repo_dir(self):
