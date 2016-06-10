@@ -29,10 +29,10 @@ def page(repo, page_path):
     except (IndexError, GitException):
         abort(404)
 
-    markdownize = load_markdown()
-    content = markdownize(data.decode('utf-8'))
+    markdown = load_markdown()
+    content = markdown.convert(data.decode('utf-8'))
 
-    return render_template('page.html', repo=repo, path=page_path, content=content)
+    return render_template('page.html', repo=repo, path=page_path, content=content, toc=markdown.toc)
 
 
 @blueprint.before_request

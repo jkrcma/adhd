@@ -13,12 +13,7 @@
 
     <hr />
 
-    {% if content.toc_html %}
-    <div class="toc">
-        <h2>Table of Contents</h2>
-        {{ content.toc_html|safe }}
-    </div>
-    {% endif %}
+    {% if toc %}<h1>Table of Contents</h1>{{ toc|safe }}{% endif %}
 
     {{ content|safe }}
 {% endblock %}

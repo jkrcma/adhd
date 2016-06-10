@@ -1,16 +1,12 @@
-from functools import partial
-
-from markdown2 import markdown
+import markdown
+from markdown.extensions import toc
+from pymdownx import github
 
 
 def load_markdown():
-    extras = [
-        'fenced-code-blocks',
-        'footnotes',
-        'header-ids',
-        'tables',
-        'toc',
-    ]
+    ext_toc = toc.TocExtension(marker=None)
+    ext_github = github.GithubExtension(no_nl2br=True)
+    extensions = [ext_github, 'markdown.extensions.codehilite', ext_toc]
 
-    return partial(markdown, extras=extras)
+    return markdown.Markdown(extensions=extensions)
 
