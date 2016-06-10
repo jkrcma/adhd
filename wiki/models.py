@@ -71,6 +71,8 @@ class Repository(object):
         except CalledProcessError as e:
             raise GitException("Failed to clone the repository from '{0}'".format(self.url)) from e
 
+        self.update()
+
     def update(self):
         assert os.path.isdir(self.repo_dir)
 
