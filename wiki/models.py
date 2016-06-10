@@ -6,6 +6,7 @@ from redis import Redis
 from rq import Queue
 from shutil import rmtree
 from subprocess import check_call, check_output, CalledProcessError
+from time import sleep
 
 import config
 from config import REPOSITORIES, GIT_DIR, UPDATE_INTERVAL
@@ -89,6 +90,8 @@ class Repository(object):
     def list_files(self):
         assert os.path.isdir(self.repo_dir)
 
+        self._wait_for_job()
+
         try:
             output = check_output(['git', 'ls-tree', '-r', '--name-only', 'FETCH_HEAD'],
                                   env={'GIT_DIR': self.repo_dir}, universal_newlines=True)
@@ -99,6 +102,8 @@ class Repository(object):
 
     def checkout_file(self, file_path):
         assert os.path.isdir(self.repo_dir)
+
+        self._wait_for_job()
 
         try:
             return check_output(['git', 'show', 'FETCH_HEAD:{0}'.format(file_path)], env={'GIT_DIR': self.repo_dir})
@@ -122,6 +127,7 @@ class Repository(object):
         # and now the updater job itself
         if not os.path.isdir(self.repo_dir):
             queue.enqueue_call(func=clone_git_repository, args=[self])
+            self._cloned = True
             # repository will become available once clone finishes
         else:
             queue.enqueue_call(func=update_git_repository, args=[self])
@@ -139,6 +145,13 @@ class Repository(object):
             return False
 
         return True
+
+    def _wait_for_job(self):
+        while True:
+            if not self._async_job or self._async_job.result:
+                break
+
+            sleep(0.5)
 
     @property
     def repo_dir(self):
