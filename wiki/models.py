@@ -38,7 +38,7 @@ class PagesCollection(object):
                 continue
 
             try:
-                files[name] = [f for f in repo.list_files() if f.endswith('.md')]
+                files[name] = [f for f in repo.list_files() if f.lower().endswith('.md')]
             except GitException:
                 logger.exception("Model error")
 

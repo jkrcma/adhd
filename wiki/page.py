@@ -1,3 +1,5 @@
+import os
+
 import flask
 from flask import render_template, abort
 
@@ -22,7 +24,9 @@ def index():
 def page(repo, page_path):
     try:
         repo = collection.get_repository(repo)
-        if not repo:
+        _, ext = os.path.splitext(page_path)
+
+        if not repo or ext.lower() != '.md':
             abort(404)
 
         data = repo.checkout_file(page_path)
