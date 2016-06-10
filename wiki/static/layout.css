@@ -10,23 +10,67 @@ body {
 .menu {
 }
 
-.menu .menu-label {
+.menu__label {
     color: #000000;
     font-weight: bold;
 }
 
-.menu .menu-label.active {
+.menu__label.is-active {
     font-weight: bold;
     color: hsl(30, 100%, 50%);
 }
 
-.menu .menu-list li a {
+.menu__link {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
 }
 
-.menu .menu-list li.active a {
+.menu__item.is-active .menu__link {
     font-weight: bold;
     color: hsl(30, 100%, 50%);
+}
+
+.content {
+    border-radius: 4px;
+    border: 1px solid #a0a0a0;
+    padding: 2em;
+    background: #fcfcfc;
+}
+
+.content__metadata {
+    /*overflow: hidden;*/
+    position: relative;
+}
+
+.content__info {
+    /*float: left;*/
+    font-family: monospace;
+}
+
+.content__toc {
+    border: 1px solid #a0a0a0;
+    border-radius: 0.25em;
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: #fafafa;
+}
+
+.content__toc-title {
+    border-bottom-left-radius: 0.25em;
+    float: right;
+    padding: 0.5em;
+    text-align: right;
+    cursor: pointer;
+    background: #eaeaea;
+}
+
+.content__toc-table {
+    display: none;
+    padding-bottom: 1.5em;
+}
+
+.content__toc:hover .content__toc-table {
+    display: block;
 }

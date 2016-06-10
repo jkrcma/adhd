@@ -31,13 +31,13 @@
             <div class="column is-3">
                 <aside class="menu">
                     {% for repository, files in g.pages.items() %}
-                    <h2 class="menu-label {% if (repo) and (repo.name == repository) %} active {% endif %}">
+                    <h2 class="menu__label {% if (repo) and (repo.name == repository) %} is-active {% endif %}">
                         {{ repository }}
                     </h2>
                     <ul class="menu-list">
                         {% for file in files %}
-                        <li class=" {% if (repo) and (repo.name == repository) and (path == file) %} active {% endif %} ">
-                            <a href="{{ url_for('page.page', repo=repository, page_path=file) }}" title="{{ file }}">
+                        <li class="menu__item {% if (repo) and (repo.name == repository) and (path == file) %} is-active {% endif %} ">
+                            <a href="{{ url_for('page.page', repo=repository, page_path=file) }}" class="menu__link" title="{{ file }}">
                                 {{ file }}
                             </a>
                         </li>
@@ -48,7 +48,7 @@
 
                 </aside>
             </div>
-            <div class="column md-reset">
+            <div class="column is-9">
                 {% block body %}{% endblock %}
             </div>
         </div>

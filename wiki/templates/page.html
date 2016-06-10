@@ -6,14 +6,35 @@
 {% block title %}{{ repo }}: {{ path }}{% endblock %}
 
 {% block body %}
-    # {{repo.name}}
-    <br />
-    # - {{path}}
-    <br />
 
-    <hr />
+<div class="content">
+    <div class="content__metadata">
+        <div class="content__info">
+            <p>
+                # {{repo.name}}
+                <br>
+                # - {{path}}
+            </p>
+        </div>
 
-    {% if toc %}<h1>Table of Contents</h1>{{ toc|safe }}{% endif %}
+        {% if toc %}
+        <div class="content__toc">
+            <div class="content__toc-title">
+                TOC
+            </div>
+            <div class="content__toc-table">
+                {{ toc|safe }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
 
-    {{ content|safe }}
+    <hr>
+
+
+    <div class="md-reset">
+        {{ content|safe }}
+    </div>
+</div>
+
 {% endblock %}
