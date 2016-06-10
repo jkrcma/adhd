@@ -9,6 +9,7 @@ from .util import load_markdown
 blueprint = flask.Blueprint('page', __name__)
 
 collection = PagesCollection()
+markdown = load_markdown()
 
 
 def initialize_app(app):
@@ -33,7 +34,6 @@ def page(repo, page_path):
     except (IndexError, GitException):
         abort(404)
 
-    markdown = load_markdown()
     content = markdown.convert(data.decode('utf-8'))
 
     return render_template('page.html', repo=repo, path=page_path, content=content, toc=markdown.toc)
