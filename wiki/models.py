@@ -82,7 +82,7 @@ class Repository(object):
         assert os.path.isdir(self.repo_dir)
 
         try:
-            output = check_output(['git', 'ls-tree', '-r', '--name-only', 'HEAD'],
+            output = check_output(['git', 'ls-tree', '-r', '--name-only', 'FETCH_HEAD'],
                                   env={'GIT_DIR': self.repo_dir}, universal_newlines=True)
         except CalledProcessError as e:
             raise GitException("Failed to list files from repository '{0}'".format(self.name)) from e
@@ -93,7 +93,7 @@ class Repository(object):
         assert os.path.isdir(self.repo_dir)
 
         try:
-            return check_output(['git', 'show', 'HEAD:{0}'.format(file_path)], env={'GIT_DIR': self.repo_dir})
+            return check_output(['git', 'show', 'FETCH_HEAD:{0}'.format(file_path)], env={'GIT_DIR': self.repo_dir})
         except CalledProcessError as e:
             raise GitException(
                 "Failed to checkout file '{1}' from repository '{0}'".format(self.name, file_path)) from e
