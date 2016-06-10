@@ -34,7 +34,7 @@ class PagesCollection(object):
         for name in self.repositories.keys():
             repo = self.get_repository(name)
 
-            if not repo:
+            if not repo or not repo.is_initialized():
                 continue
 
             try:
@@ -120,6 +120,9 @@ class Repository(object):
         logger.debug("Updating repo {0} and scheduling timer, job_id={1}".format(self.name, job_id))
         # enqueue a job with fixed id which actually determines a timer for the updated itself
         queue.enqueue_call(func=schedule_update, result_ttl=UPDATE_INTERVAL, job_id=job_id)
+
+        # clear any previous stored job
+        self._async_job = None
 
         # and now the updater job itself
         if not os.path.isdir(self.repo_dir):
