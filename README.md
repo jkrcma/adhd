@@ -53,6 +53,5 @@ Fill the bug report on [GitHub](https://github.com/jkrcma/adhd/issues) or just f
 
 ### TODO
 
-* A human-friendly HTML layout
 * Live notification after the page was changed by the background worker
 * Optimizations for large installations

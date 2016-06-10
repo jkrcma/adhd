@@ -1,0 +1,32 @@
+html,
+body {
+    background-color: #ffffff;
+}
+
+body {
+    font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+}
+
+.menu {
+}
+
+.menu .menu-label {
+    color: #000000;
+    font-weight: bold;
+}
+
+.menu .menu-label.active {
+    font-weight: bold;
+    color: hsl(30, 100%, 50%);
+}
+
+.menu .menu-list li a {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.menu .menu-list li.active a {
+    font-weight: bold;
+    color: hsl(30, 100%, 50%);
+}

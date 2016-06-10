@@ -1,7 +1,12 @@
+# Dist files
 config.py
 temp/
-.idea/
 
+# IDEs
+.idea/
+*.iml
+
+# Python
 .venv/
 *.pyc
 *.pyo

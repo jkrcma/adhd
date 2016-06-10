@@ -3,26 +3,58 @@
 <head lang="en">
     <meta charset="UTF-8">
     <title>HeurekaDevs Wiki - {% block title %}Layout{% endblock %}</title>
+
+    <link rel="stylesheet" type="text/css" href="/static/bulma.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/md-reset.css">
+    <link rel="stylesheet" type="text/css" href="/static/highlight.css">
+    <link rel="stylesheet" type="text/css" href="/static/layout.css">
     {% block assets %}{% endblock %}
 </head>
 <body>
-    <div id="menu">
-        <h2>Menu</h2>
-        <ul>
-        <li><a href="{{ url_for('page.index') }}">Home</a></li>
-        {% for repository, files in g.pages.items() %}
-            <li>{{ repository }}
-                <ul>
-                    {% for file in files %}
-                        <li><a href="{{ url_for('page.page', repo=repository, page_path=file) }}">{{ file }}</a></li>
+
+
+<section class="section">
+    <div class="container">
+        <a href="{{ url_for('page.index') }}">
+            <h1 class="title">
+                &#128218;
+                ADHD
+            </h1>
+            <h2 class="subtitle">
+                Automated Docs for Heureka Development
+            </h2>
+        </a>
+
+        <hr>
+
+        <div class="columns">
+            <div class="column is-3">
+                <aside class="menu">
+                    {% for repository, files in g.pages.items() %}
+                    <h2 class="menu-label {% if (repo) and (repo.name == repository) %} active {% endif %}">
+                        {{ repository }}
+                    </h2>
+                    <ul class="menu-list">
+                        {% for file in files %}
+                        <li class=" {% if (repo) and (repo.name == repository) and (path == file) %} active {% endif %} ">
+                            <a href="{{ url_for('page.page', repo=repository, page_path=file) }}" title="{{ file }}">
+                                {{ file }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
                     {% endfor %}
-                </ul>
-            </li>
-        {% endfor %}
-        </ul>
+
+
+                </aside>
+            </div>
+            <div class="column md-reset">
+                {% block body %}{% endblock %}
+            </div>
+        </div>
     </div>
-    <div id="content">
-        {% block body %}{% endblock %}
-    </div>
+</section>
+
+</div>
 </body>
 </html>
