@@ -57,11 +57,12 @@ class Repository(object):
     a bare repository stored under `config.GIT_DIR` directory
     """
 
+    JOB_ID_FMT = 'update:{0}'
+
     def __init__(self, name, url):
         self.name = name
         self.url = url
         self._initializing = True
-        self._async_job = None
 
     def clone(self):
         try:
@@ -99,11 +100,9 @@ class Repository(object):
                 "Failed to checkout file '{1}' from repository '{0}'".format(self.name, file_path)) from e
 
     def is_initialized(self):
-        if self._async_job and self._async_job.result is True:
-            self._initializing = False
-
-        if self._initializing:
-            return self.refresh()
+        if not self._async_job or not self._async_job.result:
+            self.refresh()
+            return False
 
         try:
             return check_call(['git', 'show-ref', '-q'], env={'GIT_DIR': self.repo_dir}) == 0
@@ -111,31 +110,31 @@ class Repository(object):
             return False
 
     def refresh(self):
-        job_id = "update:{0}".format(self.name)
-        job = queue.fetch_job(job_id)
-
-        if job:
+        if self._async_job:
             return True
+
+        job_id = self.JOB_ID_FMT.format(self.name)
 
         logger.debug("Updating repo {0} and scheduling timer, job_id={1}".format(self.name, job_id))
         # enqueue a job with fixed id which actually determines a timer for the updated itself
         queue.enqueue_call(func=schedule_update, result_ttl=UPDATE_INTERVAL, job_id=job_id)
 
-        # clear any previous stored job
-        self._async_job = None
-
         # and now the updater job itself
         if not os.path.isdir(self.repo_dir):
-            self._async_job = queue.enqueue_call(func=clone_git_repository, args=[self])
+            queue.enqueue_call(func=clone_git_repository, args=[self])
             # repository will become available once clone finishes
         else:
-            self._async_job = queue.enqueue_call(func=update_git_repository, args=[self])
+            queue.enqueue_call(func=update_git_repository, args=[self])
 
         return False
 
     @property
     def repo_dir(self):
         return os.path.join(GIT_DIR, "{0}.git".format(self.name))
+
+    @property
+    def _async_job(self):
+        return queue.fetch_job(self.JOB_ID_FMT.format(self.name))
 
 
 class GitException(Exception):
